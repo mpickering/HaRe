@@ -41,7 +41,7 @@ data-Dir:                       .
 extra-source-files:             ChangeLog
 
 Library
-        Build-Depends:          base >= 4.0  && < 4.7
+        Build-Depends:          base >= 4.0  && < 5
                                 , containers
                                 , directory
 
@@ -107,7 +107,7 @@ Executable ghc-hare
         -- GHC-Options:            -prof -fprof-auto -rtsopts -caf-all
         Hs-Source-Dirs:
           ./src
-        Build-Depends:          base >= 4.0  && < 4.7
+        Build-Depends:          base >= 4.0  && < 5
                                 , array
                                 , containers
                                 , directory
@@ -156,9 +156,9 @@ test-suite spec
     -- src
     test
   build-depends:
-      base        >= 4.0  && < 4.7
+      base        >= 4.0  && < 5
     , Diff >= 0.3.0
-    , HUnit       == 1.2.*
+    , HUnit    
     , QuickCheck  >= 2.5
     , containers
 
@@ -169,8 +169,8 @@ test-suite spec
     , deepseq
     , directory
     , filepath
-    , ghc         >= 7.0.1 && < 7.8
-    , ghc-paths   == 0.1.*
+    , ghc
+    , ghc-paths
     , ghc-prim
     , ghc-syb-utils
     , ghc-mod >= 4.0
@@ -188,7 +188,7 @@ test-suite spec
     , hslogger
     , Strafunski-StrategyLib
     , syz
-    , HaRe >= 0.7.1.6
+    -- , HaRe >= 0.7.2.2
   Extensions:      CPP
 
 source-repository head
