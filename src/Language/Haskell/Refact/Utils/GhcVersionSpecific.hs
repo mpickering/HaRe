@@ -4,8 +4,8 @@
 -- version of GHC, and should be the only one requiring CPP
 module Language.Haskell.Refact.Utils.GhcVersionSpecific
   (
-    showGhc
-  , prettyprint
+  --  showGhc
+    prettyprint
   , prettyprint2
   , ppType
   -- , lexStringToRichTokens

@@ -12,6 +12,7 @@ import Language.Haskell.Refact.Utils.Monad
 import Language.Haskell.Refact.Utils.MonadFunctions
 import Language.Haskell.Refact.Utils.TypeSyn
 import Language.Haskell.Refact.Utils.TypeUtils
+import Language.Haskell.TokenUtils.GHC.Layout
 
 import Language.Haskell.TokenUtils.DualTree
 

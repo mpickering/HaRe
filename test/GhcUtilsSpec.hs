@@ -16,6 +16,7 @@ import Language.Haskell.Refact.Utils.GhcVersionSpecific
 import Language.Haskell.Refact.Utils.GhcUtils
 import Language.Haskell.Refact.Utils.MonadFunctions
 import Language.Haskell.Refact.Utils.TypeUtils
+import Language.Haskell.TokenUtils.GHC.Layout
 
 -- import TestUtils
 

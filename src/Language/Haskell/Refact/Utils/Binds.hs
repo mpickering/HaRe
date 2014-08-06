@@ -46,6 +46,7 @@ module Language.Haskell.Refact.Utils.Binds
 
 -- import Control.Monad.IO.Class ()
 import Language.Haskell.Refact.Utils.GhcVersionSpecific
+import Language.Haskell.TokenUtils.GHC.Layout
 import Language.Haskell.TokenUtils.Utils
 
 -- Modules from GHC

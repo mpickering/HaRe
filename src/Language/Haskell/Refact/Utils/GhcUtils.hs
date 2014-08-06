@@ -168,7 +168,7 @@ everywhereStaged stage f x
 everywhereStaged' ::  SYB.Stage -> (forall a. Data a => a -> a) -> forall a. Data a => a -> a
 everywhereStaged' stage f x
   | checkItemStage stage x = x
-  | otherwise = (gmapT (everywhereStaged stage f) . f) x
+  | otherwise = (gmapT (everywhereStaged' stage f) . f) x
 
 -- ---------------------------------------------------------------------
 
