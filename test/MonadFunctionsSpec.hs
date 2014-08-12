@@ -39,7 +39,7 @@ spec = do
           r2 <- indentDeclAndToks decl2 (6)
 
           return (r,r2,decl,decl2)
-      ((res,res2,d,d2),s) <- runRefactGhc comp $ initialState { rsModule = initRefactModule t toks }
+      ((res,res2,d,d2),s) <- runRefactGhc' comp $ initialState { rsModule = initRefactModule t toks }
       -- ((res,d),s) <- runRefactGhc comp $ initialLogOnState { rsModule = initRefactModule t toks }
       (showGhc d) `shouldBe` "case list of {\n  (1 : xs) -> 1\n  (2 : xs)\n    | x GHC.Classes.< 10 -> 4\n    where\n        x = GHC.List.last xs\n  otherwise -> 12 }"
       (showGhc res) `shouldBe` "case list of {\n  (1 : xs) -> 1\n  (2 : xs)\n    | x GHC.Classes.< 10 -> 4\n    where\n        x = GHC.List.last xs\n  otherwise -> 12 }"

@@ -43,8 +43,8 @@ import Data.Time.Clock
 import Exception
 import Language.Haskell.GhcMod
 import Language.Haskell.GhcMod.Internal
-import Language.Haskell.TokenUtils.Types
 import Language.Haskell.Refact.Utils.TypeSyn
+import Language.Haskell.TokenUtils.Types
 import Language.Haskell.TokenUtils.Utils
 import System.Directory
 import System.FilePath.Posix
@@ -136,7 +136,8 @@ instance Show StateStorage where
 -- ---------------------------------------------------------------------
 -- StateT and GhcT stack
 
-type RefactGhc a = GHC.GhcT (StateT RefactState IO) a
+-- type RefactGhc a = GHC.GhcT (StateT RefactState IO) a
+type RefactGhc a = GhcModT (StateT RefactState IO) a
 
 instance (MU.MonadIO (GHC.GhcT (StateT RefactState IO))) where
          liftIO = GHC.liftIO
@@ -183,13 +184,11 @@ initGhcSession cradle importDirs = do
                  , lineSeparator = rsetLineSeparator settings
                  }
 
-    -- (_readLog,mcabal) <- initializeFlagsWithCradle opt cradle (options settings) True
-    initializeFlagsWithCradle opt cradle
-    -- initializeFlagsWithCradle :: GhcMonad m => Options -> Cradle -> m ()
+    -- initializeFlagsWithCradle opt cradle
     case cradleCabalFile cradle of
       Just cabalFile -> do
-        -- targets <- liftIO $ cabalAllTargets cabal
-        targets <- liftIO $ getCabalAllTargets cradle cabalFile
+        -- targets <- liftIO $ getCabalAllTargets cradle cabalFile
+        targets <- getCabalAllTargets cradle cabalFile
         -- liftIO $ warningM "HaRe" $ "initGhcSession:targets=" ++ show targets
         logm $ "initGhcSession:targets=" ++ show targets
 
@@ -234,17 +233,18 @@ initGhcSession cradle importDirs = do
 -- ---------------------------------------------------------------------
 
 
-getCabalAllTargets :: Cradle -> FilePath -> IO ([FilePath],[FilePath],[FilePath],[FilePath])
+getCabalAllTargets :: Cradle -> FilePath -> RefactGhc ([FilePath],[FilePath],[FilePath],[FilePath])
 getCabalAllTargets cradle cabalFile = do
-   currentDir <- getCurrentDirectory
+   currentDir <- liftIO $ getCurrentDirectory
    -- let cabalDir = gfromJust "getCabalAllTargets" (cradleCabalDir cradle)
    let cabalDir = cradleRootDir cradle
 
-   setCurrentDirectory cabalDir
+   liftIO $ setCurrentDirectory cabalDir
 
-   pkgDesc <- liftIO $ parseCabalFile cabalFile
+   pkgDesc <- parseCabalFile cabalFile
+   -- parseCabalFile :: (MonadIO m, MonadError GhcModError m) => FilePath -> m PackageDescription
    (libs,exes,tests,benches) <- liftIO $ cabalAllTargets pkgDesc
-   setCurrentDirectory currentDir
+   liftIO $ setCurrentDirectory currentDir
 
    let libs'    = filter (\l -> not (isPrefixOf "Paths_" l)) libs
        exes'    = addCabalDir exes
@@ -339,9 +339,14 @@ canonicalizeGraph graph = do
 -- ---------------------------------------------------------------------
 
 runRefactGhc ::
-  RefactGhc a -> RefactState -> IO (a, RefactState)
+  RefactGhc a -> RefactState -> IO (Either GhcModError a,RefactState)
 runRefactGhc comp initState = do
-    runStateT (GHC.runGhcT (Just GHC.libdir) comp) initState
+    -- runStateT (GHC.runGhcT (Just GHC.libdir) comp) initState
+    ((r,_l),s) <- runStateT (runGhcModT opts comp) initState
+    -- m (Either GhcModError a, GhcModLog)
+    return (r,s)
+  where
+    opts = defaultOptions
 
 getRefacSettings :: RefactGhc RefactSettings
 getRefacSettings = do

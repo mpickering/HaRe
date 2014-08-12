@@ -2058,7 +2058,7 @@ putToksAfterSpan test/testdata/AddParams1.hs:4:5:(((False,0,0,4),5),((False,0,0,
           -- newName <- mkNewGhcName Nothing "park"
           new <- renamePN n newName True False renamed
           return (new,newName)
-      ((_n,_nn),s) <- runRefactGhc comp $ initialState { rsModule = initRefactModule t toks }
+      ((_n,_nn),s) <- runRefactGhc' comp $ initialState { rsModule = initRefactModule t toks }
       -- ((n,nn),_s) <- runRefactGhc comp $ initialLogOnState { rsModule = initRefactModule t toks }
 
       let Just treeFinal = layoutFromState s

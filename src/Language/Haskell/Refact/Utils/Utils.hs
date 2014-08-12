@@ -274,12 +274,15 @@ runRefacSession settings cradle comp = do
         , rsModule = Nothing
         }
 
-  (refactoredMods,_s) <- runRefactGhc (initGhcSession cradle (rsetImportPaths settings) >>
+  (r,_s) <- runRefactGhc (initGhcSession cradle (rsetImportPaths settings) >>
                                        comp) initialState
 
-  let verbosity = rsetVerboseLevel (rsSettings initialState)
-  writeRefactoredFiles verbosity refactoredMods
-  return $ modifiedFiles refactoredMods
+  case r of
+    Left err -> return []
+    Right refactoredMods -> do
+      let verbosity = rsetVerboseLevel (rsSettings initialState)
+      writeRefactoredFiles verbosity refactoredMods
+      return $ modifiedFiles refactoredMods
 
 -- ---------------------------------------------------------------------
 

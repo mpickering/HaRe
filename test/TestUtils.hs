@@ -8,6 +8,7 @@ module TestUtils
        , runTestGhc
        , runRefactGhcState
        , runRefactGhcStateLog
+       , runRefactGhc'
        , initialState
        , initialLogOnState
        , toksFromState
@@ -207,15 +208,19 @@ getTestDynFlags = do
 
 runLogTestGhc :: RefactGhc a -> IO (a, RefactState)
 runLogTestGhc comp = do
-   res <- runRefactGhc comp $ initialLogOnState
-   return res
+   (res,s) <- runRefactGhc comp $ initialLogOnState
+   case res of
+     Left err -> error $ show err
+     Right r -> return (r,s)
 
 -- ---------------------------------------------------------------------
 
 runTestGhc :: RefactGhc a -> IO (a, RefactState)
 runTestGhc comp = do
-   res <- runRefactGhc comp $ initialState
-   return res
+   (res,s) <- runRefactGhc comp $ initialState
+   case res of
+     Left err -> error $ show err
+     Right r -> return (r,s)
 
 -- ---------------------------------------------------------------------
 
@@ -237,9 +242,21 @@ runRefactGhcStateLog paramcomp logOn  = do
         , rsCurrentTarget = Nothing
         , rsModule = Nothing
         }
-  (r,s) <- runRefactGhc (initGhcSession testCradle (rsetImportPaths defaultTestSettings) >> 
+  (res,s) <- runRefactGhc (initGhcSession testCradle (rsetImportPaths defaultTestSettings) >> 
                                                 paramcomp) initState
-  return (r,s)
+  case res of
+    Left err -> error $ show err
+    Right r -> return (r,s)
+
+
+-- ---------------------------------------------------------------------
+
+runRefactGhc' :: RefactGhc a -> RefactState -> IO (a,RefactState)
+runRefactGhc' comp initState = do
+  (res,s) <- runRefactGhc comp initState
+  case res of
+    Left err -> error $ show err
+    Right r -> return (r,s)
 
 -- ---------------------------------------------------------------------
 
