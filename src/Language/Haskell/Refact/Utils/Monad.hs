@@ -170,21 +170,7 @@ instance (MonadPlus m,Functor m,GHC.MonadIO m,ExceptionMonad m) => MonadPlus (GH
 initGhcSession :: Cradle -> [FilePath] -> RefactGhc ()
 initGhcSession cradle importDirs = do
     settings <- getRefacSettings
-    let ghcOptsDirs =
-         case importDirs of
-           [] -> (rsetGhcOpts settings)
-           _  -> ("-i" ++ (intercalate ":" importDirs)):(rsetGhcOpts settings)
-    let opt = Options {
-                 outputStyle = PlainStyle
-                 , hlintOpts = []
-                 , ghcOpts = ghcOptsDirs
-                 , operators = False
-                 , detailed = False
-                 , qualified = False
-                 , lineSeparator = rsetLineSeparator settings
-                 }
 
-    -- initializeFlagsWithCradle opt cradle
     case cradleCabalFile cradle of
       Just cabalFile -> do
         -- targets <- liftIO $ getCabalAllTargets cradle cabalFile
@@ -201,10 +187,7 @@ initGhcSession cradle importDirs = do
         case targets' of
           ([],[]) -> return ()
           (libTgts,exeTgts) -> do
-                     -- liftIO $ warningM "HaRe" $ "initGhcSession:tgts=" ++ (show (libTgts,exeTgts))
                      logm $ "initGhcSession:(libTgts,exeTgts)=" ++ (show (libTgts,exeTgts))
-                     -- setTargetFiles tgts
-                     -- void $ GHC.load GHC.LoadAllTargets
 
                      mapM_ loadModuleGraphGhc $ map (\t -> Just [t]) exeTgts
 
@@ -213,8 +196,6 @@ initGhcSession cradle importDirs = do
                        [] -> return ()
                        _ -> loadModuleGraphGhc (Just libTgts)
 
-                     -- moduleGraph <- gets rsModuleGraph
-                     -- logm $ "initGhcSession:rsModuleGraph=" ++ (show moduleGraph)
 
       Nothing -> do
           let maybeMainFile = rsetMainFile settings
@@ -341,17 +322,39 @@ canonicalizeGraph graph = do
 runRefactGhc ::
   RefactGhc a -> RefactState -> IO (Either GhcModError a,RefactState)
 runRefactGhc comp initState = do
+    let opts = getGhcModOptions (rsSettings initState)
+
     -- runStateT (GHC.runGhcT (Just GHC.libdir) comp) initState
     ((r,_l),s) <- runStateT (runGhcModT opts comp) initState
     -- m (Either GhcModError a, GhcModLog)
     return (r,s)
-  where
-    opts = defaultOptions
 
 getRefacSettings :: RefactGhc RefactSettings
 getRefacSettings = do
   s <- get
   return (rsSettings s)
+
+-- ---------------------------------------------------------------------
+
+getGhcModOptions :: RefactSettings -> Options
+getGhcModOptions settings = opt
+  where
+    importDirs = rsetImportPaths settings
+    ghcOptsDirs =
+         case importDirs of
+           [] -> (rsetGhcOpts settings)
+           _  -> ("-i" ++ (intercalate ":" importDirs)):(rsetGhcOpts settings)
+
+    opt = Options
+        { outputStyle = PlainStyle
+        , hlintOpts = []
+        -- , ghcUserOptions = "-package template-haskell":ghcOptsDirs -- GHC command line options set on the ghc-mod command line
+        , ghcUserOptions = ghcOptsDirs -- GHC command line options set on the ghc-mod command line
+        , operators = False -- If True, browse also returns operators.
+        , detailed = False -- If True, browse also returns types.
+        , qualified = False -- If True, browse will return fully qualified name
+        , lineSeparator = rsetLineSeparator settings
+        }
 
 -- ---------------------------------------------------------------------
 

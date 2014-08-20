@@ -35,17 +35,17 @@ spec :: Spec
 spec = do
 
   describe "locToExp on ParsedSource" $ do
-    it "finds the largest leftmost expression contained in a given region #1" $ do
-      (t, _toks) <- parsedFileBGhc
+    it "finds the largest leftmost expression contained in a given region parsed #1" $ do
+      (t, _toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
       let parsed = GHC.pm_parsed_source $ GHC.tm_parsed_module t
 
       let (Just expr) = locToExp (7,7) (7,43) parsed :: Maybe (GHC.Located (GHC.HsExpr GHC.RdrName))
       getLocatedStart expr `shouldBe` (7,9)
       getLocatedEnd   expr `shouldBe` (7,42)
 
-    it "finds the largest leftmost expression contained in a given region #2" $ do
-      -- ((_, _, mod), toks) <- parsedFileBGhc
-      (t, _toks) <- parsedFileBGhc
+    it "finds the largest leftmost expression contained in a given region parsed #2" $ do
+      -- ((_, _, mod), toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
+      (t, _toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
       let modu = GHC.pm_parsed_source $ GHC.tm_parsed_module t
 
       let (Just expr) = locToExp (7,7) (7,41) modu :: Maybe (GHC.Located (GHC.HsExpr GHC.RdrName))
@@ -53,8 +53,8 @@ spec = do
       getLocatedEnd   expr `shouldBe` (7,19)
 
     it "finds the largest leftmost expression in RenamedSource" $ do
-      -- ((_, renamed, _), toks) <- parsedFileBGhc
-      (t, _toks) <- parsedFileBGhc
+      -- ((_, renamed, _), toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
+      (t, _toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
       let renamed = fromJust $ GHC.tm_renamed_source t
 
       let (Just expr) = locToExp (7,7) (7,41) renamed :: Maybe (GHC.Located (GHC.HsExpr GHC.Name))
@@ -62,9 +62,9 @@ spec = do
       getLocatedEnd   expr `shouldBe` (7,19)
 
   describe "locToExp on RenamedSource" $ do
-    it "finds the largest leftmost expression contained in a given region #1" $ do
-      -- ((_, Just renamed, _), toks) <- parsedFileBGhc
-      (t, _toks) <- parsedFileBGhc
+    it "finds the largest leftmost expression contained in a given region renamed #1" $ do
+      -- ((_, Just renamed, _), toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
+      (t, _toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
       let renamed = fromJust $ GHC.tm_renamed_source t
 
       let (Just expr) = locToExp (7,7) (7,43) renamed :: Maybe (GHC.Located (GHC.HsExpr GHC.Name))
@@ -313,8 +313,8 @@ spec = do
 
   describe "getModuleName" $ do
     it "returns a string for the module name if there is one" $ do
-      -- modInfo@((_, _, mod), toks) <- parsedFileBGhc
-      (t, _toks) <- parsedFileBGhc
+      -- modInfo@((_, _, mod), toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
+      (t, _toks) <- parsedFileGhc "./test/testdata/TypeUtils/B.hs"
       let modu = GHC.pm_parsed_source $ GHC.tm_parsed_module t
 
       let (Just (_modname,modNameStr)) = getModuleName modu
@@ -557,20 +557,6 @@ spec = do
 
 -- ---------------------------------------------------------------------
 -- Helper functions
-
--- bFileName :: GHC.FastString
--- bFileName = GHC.mkFastString "./test/testdata/TypeUtils/B.hs"
-
-parsedFileBGhc :: IO (ParseResult,[PosToken])
-parsedFileBGhc = parsedFileGhc "./test/testdata/TypeUtils/B.hs"
-
--- parsedFileMGhc :: IO (ParseResult,[PosToken])
--- parsedFileMGhc = parsedFileGhc "./test/testdata/M.hs"
-
--- parseFileBGhc :: RefactGhc (ParseResult, [PosToken])
--- parseFileBGhc = parseSourceFileTest fileName
---   where
---     fileName = "./test/testdata/TypeUtils/B.hs"
 
 parseFileMGhc :: RefactGhc (ParseResult, [PosToken])
 parseFileMGhc = parseSourceFileTest fileName

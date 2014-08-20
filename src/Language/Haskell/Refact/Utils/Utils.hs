@@ -223,13 +223,6 @@ getModuleDetails modSum = do
 -- | Parse a single source file into a GHC session
 parseSourceFileGhc :: FilePath -> RefactGhc ()
 parseSourceFileGhc targetFile = do
-     {-
-      target <- GHC.guessTarget ("*" ++ targetFile) Nothing -- The *
-                                     -- is to force interpretation, for inscopes
-      GHC.setTargets [target]
-      void $ GHC.load GHC.LoadAllTargets -- Loads and compiles, much as calling ghc --make
-     -}
-      -- logm $ "parseSourceFileGhc:about to loadModuleGraphGhc for" ++ (show targetFile)
       loadModuleGraphGhc (Just [targetFile])
       -- logm $ "parseSourceFileGhc:loadModuleGraphGhc done"
 
@@ -263,7 +256,7 @@ runRefacSession ::
     -> IO [FilePath]
 runRefacSession settings cradle comp = do
   let
-   initialState = RefSt
+    initialState = RefSt
         { rsSettings = settings
         , rsUniqState = 1
         , rsFlags = RefFlags False

@@ -182,10 +182,12 @@ checkItemStage stage x = (checkItemStage1 stage x)
                       || (checkItemStage2 stage x)
 #endif
 
+-- ++AZ++ TODO: PostTcKind
 -- Check the Typeable items
 checkItemStage1 :: (Typeable a) => SYB.Stage -> a -> Bool
 checkItemStage1 stage x = (const False `SYB.extQ` postTcType `SYB.extQ` fixity `SYB.extQ` nameSet) x
-  where nameSet     = const (stage `elem` [SYB.Parser,SYB.TypeChecker]) :: GHC.NameSet       -> Bool
+  where nameSet     = const (stage < SYB.Renamer                      ) :: GHC.NameSet       -> Bool
+        -- nameSet     = const (stage `elem` [SYB.Parser,SYB.TypeChecker]) :: GHC.NameSet       -> Bool
         postTcType  = const (stage < SYB.TypeChecker                  ) :: GHC.PostTcType    -> Bool
         fixity      = const (stage < SYB.Renamer                      ) :: GHC.Fixity        -> Bool
 

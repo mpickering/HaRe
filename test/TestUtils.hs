@@ -208,7 +208,7 @@ getTestDynFlags = do
 
 runLogTestGhc :: RefactGhc a -> IO (a, RefactState)
 runLogTestGhc comp = do
-   (res,s) <- runRefactGhc comp $ initialLogOnState
+   (res,s) <- runRefactGhc comp initialLogOnState
    case res of
      Left err -> error $ show err
      Right r -> return (r,s)
@@ -242,6 +242,7 @@ runRefactGhcStateLog paramcomp logOn  = do
         , rsCurrentTarget = Nothing
         , rsModule = Nothing
         }
+
   (res,s) <- runRefactGhc (initGhcSession testCradle (rsetImportPaths defaultTestSettings) >> 
                                                 paramcomp) initState
   case res of
