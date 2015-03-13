@@ -1,10 +1,19 @@
-module RoundTripSpec (main, spec) where
+module RoundTripSpec  where
 
 import           Test.Hspec
 
 import Language.Haskell.Refact.Refactoring.RoundTrip
+import System.FilePath
+
+import System.FilePath.Find
+import System.Directory
 
 import TestUtils
+import Control.Applicative
+
+import Debug.Trace
+
+import Data.List (isPrefixOf)
 
 main :: IO ()
 main = do
@@ -63,5 +72,37 @@ spec = do
     -- ---------------------------------
 -- ---------------------------------------------------------------------
 -- Helper functions
+
+
+-- Given base directory finds all haskell source files
+findSrcFiles :: FilePath -> IO [FilePath]
+findSrcFiles = find avoidHidden (extension ==? ".hs")
+
+avoidHidden :: FindClause Bool
+avoidHidden = do
+  fileName >>= (\x -> return $ if "." `isPrefixOf` x then False else True)
+
+-- Hackage dir
+roundTripHackage :: FilePath -> Spec
+roundTripHackage hackageDir = do
+  packageDirs <- runIO (getDirectoryContents hackageDir)
+  mapM_ roundTripPackage packageDirs
+
+
+roundTripPackage :: FilePath -> SpecWith ()
+roundTripPackage dir =
+  describe dir (
+    do
+      hsFiles <- runIO (findSrcFiles dir)
+      mapM_ roundTripFile hsFiles)
+
+
+roundTripFile :: FilePath -> SpecWith ()
+roundTripFile file = it file $ do
+  r <- ct $ roundTrip defaultTestSettings testOptions file
+  r `shouldBe` [file]
+  let expected = replaceExtension file "refactored.hs"
+  diff <- compareFiles file expected
+  diff `shouldBe` []
 
 

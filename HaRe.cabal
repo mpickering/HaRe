@@ -201,6 +201,7 @@ test-suite spec
     , monad-control
     , Cabal >= 1.22
     , uniplate
+    , filemanip
     -- , Paths_HaRe
     -- , haskell-token-utils >= 0.0.0.6
     , HaRe >= 0.8
