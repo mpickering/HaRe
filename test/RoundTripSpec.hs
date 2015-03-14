@@ -13,7 +13,10 @@ import Control.Applicative
 
 import Debug.Trace
 
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, isInfixOf)
+
+import System.Process
+import System.Exit
 
 main :: IO ()
 main = do
@@ -76,11 +79,26 @@ spec = do
 
 -- Given base directory finds all haskell source files
 findSrcFiles :: FilePath -> IO [FilePath]
-findSrcFiles = find avoidHidden (extension ==? ".hs")
+findSrcFiles = find filterDirectory filterFilename
 
-avoidHidden :: FindClause Bool
-avoidHidden = do
-  fileName >>= (\x -> return $ if "." `isPrefixOf` x then False else True)
+filterDirectory :: FindClause Bool
+filterDirectory = do
+  pred <$> fileName
+  where
+    pred x
+      | "." `isPrefixOf` x = False
+      | otherwise = True
+
+filterFilename :: FindClause Bool
+filterFilename = do
+  ext <- extension
+  fname <- fileName
+  return (ext == ".hs" && pred fname)
+  where
+    pred x
+      | "refactored" `isInfixOf` x = False
+      | "Setup.hs" `isInfixOf` x = False
+      | otherwise                           = True
 
 -- Hackage dir
 roundTripHackage :: FilePath -> Spec
@@ -88,21 +106,45 @@ roundTripHackage hackageDir = do
   packageDirs <- runIO (getDirectoryContents hackageDir)
   mapM_ roundTripPackage packageDirs
 
+roundTripContext :: FilePath -> Spec -> Spec
+roundTripContext dir  =
+  beforeAll (setCurrentDirectory dir >> installDeps)
+  . afterAll_  deleteSandbox
 
 roundTripPackage :: FilePath -> SpecWith ()
 roundTripPackage dir =
   describe dir (
-    do
-      hsFiles <- runIO (findSrcFiles dir)
-      mapM_ roundTripFile hsFiles)
+    roundTripContext dir
+      (do
+        hsFiles <- runIO (findSrcFiles dir)
+        mapM_ (roundTripFile dir . makeRelative dir) hsFiles))
 
 
-roundTripFile :: FilePath -> SpecWith ()
-roundTripFile file = it file $ do
-  r <- ct $ roundTrip defaultTestSettings testOptions file
-  r `shouldBe` [file]
+roundTripFile :: FilePath -> FilePath -> SpecWith ()
+roundTripFile dir file = it file $ do
+  r <- roundTrip defaultTestSettings testOptions file
+  r `shouldBe` [dir </> file]
   let expected = replaceExtension file "refactored.hs"
-  diff <- compareFiles file expected
+  diff <- compareFiles (dir </> file) (dir </> expected)
   diff `shouldBe` []
 
+
+cabal = callProcess "cabal"
+
+
+-- MP: Experimental
+installDeps :: IO ()
+installDeps = do
+  writeFile "cabal.config" "with-compiler: ghc-7.11.20150209"
+--  cabal ["sandbox", "init"]
+  (code, stdout, _) <- readProcessWithExitCode "cabal" ["configure", "--enable-tests", "--enable-benchmarks"] ""
+  traceM stdout
+  case code of
+    ExitSuccess -> return ()
+    ExitFailure _ -> cabal ["install", "--only-dependencies"]
+
+deleteSandbox :: IO ()
+deleteSandbox =
+--  cabal ["sandbox", "delete"]
+  return ()
 
