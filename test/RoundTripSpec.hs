@@ -135,7 +135,6 @@ cabal = callProcess "cabal"
 -- MP: Experimental
 installDeps :: IO ()
 installDeps = do
-  writeFile "cabal.config" "with-compiler: ghc-7.11.20150209"
 --  cabal ["sandbox", "init"]
   (code, stdout, _) <- readProcessWithExitCode "cabal" ["configure", "--enable-tests", "--enable-benchmarks"] ""
   traceM stdout
