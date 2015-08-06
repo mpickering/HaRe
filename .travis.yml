@@ -9,6 +9,9 @@ addons:
   apt:
     packages:
     - libgmp-dev
+    - cabal-install-1.22
+    sources:
+    - hvr-ghc
 
 before_install:
   # stack
@@ -22,6 +25,9 @@ before_install:
 install:
   - ./travis_long stack --no-terminal setup
   - ./travis_long stack --no-terminal test --only-snapshot
+  - cd test/testdata
+  - stack exec cabal-1.22 configure
+  - cd ../../
 
 script:
   - stack --no-terminal test
