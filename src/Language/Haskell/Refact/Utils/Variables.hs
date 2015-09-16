@@ -1250,7 +1250,7 @@ getDeclaredTypesRdr (GHC.L _ (GHC.TyClD decl)) = do
       return $ [rdrName2NamePure nm ln] ++ ddns
 
     (GHC.ClassDecl _ ln _vars _fds sigs meths ats _atdefs _ _fvs) -> do
-      msn <- getMsn meths
+      msn <- undefined --getMsn meths
       let fds = map (GHC.fdLName . GHC.unLoc) ats
           fds' = map (rdrName2NamePure nm) fds
       return $ nub $ [rdrName2NamePure nm ln] ++ ssn ++ msn ++ fds' -- ++ asn

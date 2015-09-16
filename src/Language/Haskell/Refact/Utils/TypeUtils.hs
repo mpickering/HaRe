@@ -1008,9 +1008,9 @@ addDecl parent pn (declSig, mDeclAnns) topLevel = do
  where
   setDeclSpacing newDeclSig n c = do
     -- First clear any previous indentation
-    mapM_ (\d -> setPrecedingLinesDeclT d 1 0) newDeclSig
-    setPrecedingLinesT (ghead "addDecl" newDeclSig) n c
-    -- mapM_ (\d -> setPrecedingLinesT d 1 0) (gtail "addDecl" newDeclSig)
+    mapM_ (\d -> setPrecedingLinesT d 0 0) newDeclSig
+    setPrecedingLinesT (head newDeclSig) n c
+--    mapM_ (\d -> setPrecedingLinesT d 1 0) (tail newDeclSig)
 
   appendDecl :: (HasDecls t)
       => t        -- ^Original AST
@@ -1286,52 +1286,52 @@ The code
 
 results in
 
-          (GRHSs 
+          (GRHSs
            [
             ({ LiftToToplevel/D1.hs:(13,15)-(15,16) }
              Just (Ann (DP (0,-1)) [] [] [] Nothing Nothing)
-             (GRHS 
-              [] 
+             (GRHS
+              []
               ({ LiftToToplevel/D1.hs:13:17-43 }
                Just (Ann (DP (0,1)) [] [] [] Nothing Nothing)
-               (OpApp 
+               (OpApp
                 ({ LiftToToplevel/D1.hs:13:17-27 }
                  Just (Ann (DP (0,0)) [] [] [] Nothing Nothing)
-                 (HsApp 
+                 (HsApp
                   ({ LiftToToplevel/D1.hs:13:17-25 }
                    Just (Ann (DP (0,0)) [] [] [((G AnnOpenP),DP (0,0)),((G AnnCloseP),DP (0,0))] Nothing Nothing)
-                   (HsPar 
+                   (HsPar
                     ({ LiftToToplevel/D1.hs:13:18-24 }
                      Just (Ann (DP (0,0)) [] [] [] Nothing Nothing)
-                     (HsApp 
+                     (HsApp
                       ({ LiftToToplevel/D1.hs:13:18-19 }
                        Just (Ann (DP (0,0)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                       (HsVar 
-                        (Unqual {OccName: sq}))) 
+                       (HsVar
+                        (Unqual {OccName: sq})))
                       ({ LiftToToplevel/D1.hs:13:21-24 }
                        Just (Ann (DP (0,1)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                       (HsVar 
-                        (Unqual {OccName: bar2}))))))) 
+                       (HsVar
+                        (Unqual {OccName: bar2})))))))
                   ({ LiftToToplevel/D1.hs:13:27 }
                    Just (Ann (DP (0,1)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                   (HsVar 
-                    (Unqual {OccName: x}))))) 
+                   (HsVar
+                    (Unqual {OccName: x})))))
                 ({ LiftToToplevel/D1.hs:13:29 }
                  Just (Ann (DP (0,1)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                 (HsVar 
-                  (Unqual {OccName: +}))) 
-                (PlaceHolder) 
+                 (HsVar
+                  (Unqual {OccName: +})))
+                (PlaceHolder)
                 ({ LiftToToplevel/D1.hs:13:31-43 }
                  Just (Ann (DP (0,1)) [] [] [] Nothing Nothing)
-                 (HsApp 
+                 (HsApp
                   ({ LiftToToplevel/D1.hs:13:31-40 }
                    Just (Ann (DP (0,0)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                   (HsVar 
-                    (Unqual {OccName: sumSquares}))) 
+                   (HsVar
+                    (Unqual {OccName: sumSquares})))
                   ({ LiftToToplevel/D1.hs:13:42-43 }
                    Just (Ann (DP (0,1)) [] [] [((G AnnVal),DP (0,0))] Nothing Nothing)
-                   (HsVar 
-                    (Unqual {OccName: xs})))))))))] 
+                   (HsVar
+                    (Unqual {OccName: xs})))))))))]
 
 -}
 {-
@@ -1512,7 +1512,7 @@ rmDecl pn incSig t = do
            then return x
            else do
              nameMap <- getRefactNameMap
-             decls <- liftT $ hsDecls localDecls
+             decls <- liftT $ hsDecls x
              let (decls1,decls2) = break (definesDeclRdr nameMap pn) decls
              if not $ emptyList decls2
                 then do
@@ -1525,9 +1525,9 @@ rmDecl pn incSig t = do
                      -- logm $ "rmDecl.inLet:length decls /= 1"
                      -- let decls2' = gtail "inLet" decls2
                      decls' <- doRmDecl decls1 decls2
-                     localDecls' <- liftT $ replaceDecls localDecls decls'
+                     x' <- liftT $ replaceDecls x decls'
                      -- logDataWithAnns "inLet" (GHC.L ss (GHC.HsLet localDecls' expr))
-                     return $ (GHC.L ss (GHC.HsLet localDecls' expr))
+                     return $ x'
                 else do
                   -- liftT $ replaceDecls localDecls decls
                   return x
@@ -1714,7 +1714,7 @@ rmTypeSig pn t
                       parent' <- liftT $ replaceDecls parent (decls1++[newSig]++gtail "doRmTypeSig" decls2)
                       return parent'
                   else do
-                      let [oldSig] = decl2Sig sig
+                      [oldSig] <- liftT $ decl2SigT sig
                       setStateStorage (StorageSigRdr oldSig)
                       {-
                       unless (null $ tail decls2) $ do

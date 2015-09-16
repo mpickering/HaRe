@@ -323,7 +323,7 @@ moveDecl1 t defName ns mliftedDecls sigNames mliftedSigs topLevel = do
   logm $ "moveDecl1:mliftedSigs=" ++ showGhc mliftedSigs
   (t',_declRemoved,_sigRemoved) <- rmDecl (ghead "moveDecl3.1"  ns) False t''
   logm $ "moveDecl1:after rmDecl:t'" ++ SYB.showData SYB.Parser 0 t'
-  let sigs = map wrapSig mliftedSigs
+  sigs <- mapM wrapSigT mliftedSigs
   r <- addDecl t' defName (sigs++funBinding,Nothing) topLevel
 
   return r
@@ -1718,14 +1718,10 @@ foldParams pns match@(GHC.L l (GHC.Match _mfn _pats _mt rhs)) _decls demotedDecl
                      -- return (HsMatch loc1 name pats rhs (ds++demotedDecls))  -- no parameter folding
                      -- logm $ "MoveDef.foldParams about to addDecl:dtoks=" ++ (show dtoks)
                      -- drawTokenTree "" -- ++AZ++ debug
-                     let sigs = map wrapSig dsig
-                     -- rhs' <- addDecl rhs Nothing (sigs++[demotedDecls],Nothing) False
-                     -- logDataWithAnns "MoveDef.foldParams addDecl done 2:rhs'=" rhs'
-                     -- return (GHC.L l (GHC.Match mfn pats mt rhs'))
-                     match' <- addDecl match Nothing (sigs++[demotedDecls],Nothing) False
-                     -- logDataWithAnns "MoveDef.foldParams addDecl done 2:rhs'=" match'
-                     logm "MoveDef.foldParams addDecl done 2"
-                     return match'
+                     sigs <- mapM wrapSigT dsig
+                     rhs' <- addDecl rhs Nothing (sigs++[demotedDecls],Nothing) False
+                     logm $ "MoveDef.foldParams addDecl done 2"
+                     return (GHC.Match mfn pats mt rhs')
 
          -- return match
     where

@@ -123,6 +123,8 @@ fetchAnnsFinal = do
   let anns = (tkCache $ rsTokenCache tm) Map.! mainTid
   return anns
 
+liftT = refactRunTransform
+
 -- |Get the current tokens for a given GHC.SrcSpan.
 getToksForSpan ::  GHC.SrcSpan -> RefactGhc [PosToken]
 getToksForSpan _sspan = do
@@ -295,7 +297,8 @@ replaceRdrName (GHC.L l newName) = do
 {-
 refactReplaceDecls :: (HasDecls a) => a -> [GHC.LHsDecl GHC.RdrName] -> RefactGhc a
 refactReplaceDecls t decls = do
-  liftT (replaceDecls t decls)
+<<<<<<< HEAD
+  refactRunTransform (replaceDecls t decls)
 -}
 
 -- |Run a transformation in the ghc-exactprint Transform monad, updating the
@@ -316,8 +319,8 @@ refactRunTransform transform = do
 
 -- ---------------------------------------------------------------------
 
-instance HasTransform RefactGhc where
-  liftT = refactRunTransform
+--instance HasTransform RefactGhc where
+--  liftT = refactRunTransform
 
 -- ---------------------------------------------------------------------
 
@@ -623,7 +626,7 @@ parseDeclWithAnns src = do
     Left err -> error (show err)
     Right (anns,decl) -> do
       -- addRefactAnns anns
-      liftT $ modifyAnnsT (mergeAnns anns)
+      refactRunTransform $ modifyAnnsT (mergeAnns anns)
       return decl
 
 -- EOF
