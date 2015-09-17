@@ -95,7 +95,7 @@ import qualified Var           as GHC
 import qualified Data.Generics as SYB
 -- import qualified GHC.SYB.Utils as SYB
 
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 import Language.Haskell.GHC.ExactPrint.Types
 import Language.Haskell.GHC.ExactPrint.Parsers
 import Language.Haskell.GHC.ExactPrint.Utils

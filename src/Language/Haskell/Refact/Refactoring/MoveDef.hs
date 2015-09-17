@@ -38,7 +38,7 @@ import Language.Haskell.Refact.API
 
 import Language.Haskell.GHC.ExactPrint.Types
 -- import Language.Haskell.GHC.ExactPrint.Utils
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 
 import Data.Generics.Strafunski.StrategyLib.StrategyLib
 

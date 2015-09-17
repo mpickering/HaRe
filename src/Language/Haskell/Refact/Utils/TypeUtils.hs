@@ -145,7 +145,7 @@ import Language.Haskell.Refact.Utils.TypeSyn
 import Language.Haskell.Refact.Utils.Types
 import Language.Haskell.Refact.Utils.Variables
 
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 import Language.Haskell.GHC.ExactPrint.Types
 import Language.Haskell.GHC.ExactPrint.Utils
 
@@ -1430,7 +1430,7 @@ duplicateDecl decls n newFunName
      let
        declsToDup = definingDeclsRdrNames nm [n] decls True False
        funBinding = filter isFunOrPatBindP declsToDup     --get the fun binding.
-       typeSig    = map wrapSig $ definingSigsRdrNames nm [n] decls
+     typeSig   <- undefined --mapM wrapSigT $ definingSigsRdrNames nm [n] decls
      funBinding'' <- renamePN' n newFunName False funBinding
      typeSig'' <- renamePN' n newFunName False typeSig
      logm $ "duplicateDecl:funBinding''=" ++ showGhc funBinding''
@@ -1714,7 +1714,7 @@ rmTypeSig pn t
                       parent' <- liftT $ replaceDecls parent (decls1++[newSig]++gtail "doRmTypeSig" decls2)
                       return parent'
                   else do
-                      [oldSig] <- liftT $ decl2SigT sig
+                      [oldSig] <- undefined --decl2SigT sig
                       setStateStorage (StorageSigRdr oldSig)
                       {-
                       unless (null $ tail decls2) $ do

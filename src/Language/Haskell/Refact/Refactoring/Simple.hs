@@ -10,7 +10,7 @@ import qualified Language.Haskell.GhcMod as GM (Options(..))
 import Language.Haskell.Refact.API
 
 -- To be moved into HaRe API
-import Language.Haskell.GHC.ExactPrint.Transform
+import Language.Haskell.GHC.ExactPrint.Transform hiding (liftT)
 import Language.Haskell.Refact.Utils.ExactPrint
 import Language.Haskell.Refact.Utils.MonadFunctions
 
