@@ -164,9 +164,11 @@ import qualified Var           as GHC
 import qualified Data.Generics as SYB
 import qualified GHC.SYB.Utils as SYB
 
+import Data.Generics.Schemes (listify)
+
 import qualified Data.Map as Map
 
-import Data.Generics.Strafunski.StrategyLib.StrategyLib hiding (liftIO,MonadPlus,mzero)
+import Data.Generics.Strafunski.StrategyLib.StrategyLib hiding (liftIO,MonadPlus,mzero, listify)
 
 -- ---------------------------------------------------------------------
 -- ---------------------------------------------------------------------
@@ -1430,7 +1432,7 @@ duplicateDecl decls n newFunName
      let
        declsToDup = definingDeclsRdrNames nm [n] decls True False
        funBinding = filter isFunOrPatBindP declsToDup     --get the fun binding.
-     typeSig   <- undefined --mapM wrapSigT $ definingSigsRdrNames nm [n] decls
+     typeSig   <- liftT $ mapM wrapSigT $ definingSigsRdrNames nm [n] decls
      funBinding'' <- renamePN' n newFunName False funBinding
      typeSig'' <- renamePN' n newFunName False typeSig
      logm $ "duplicateDecl:funBinding''=" ++ showGhc funBinding''
@@ -1459,9 +1461,9 @@ divideDecls :: SYB.Data t =>
 divideDecls ds (GHC.L _ pnt) = do
   nm <- getRefactNameMap
   let (before,after) = break (\x -> findNameInRdr nm pnt x) ds
-  return $ if (not $ emptyList after)
-         then (before, [ghead "divideDecls" after], gtail "divideDecls" after)
-         else (ds,[],[])
+  return $ case after of
+    [] -> (before, [], [])
+    (x:xs) -> (before, [x], xs)
 
 -- ---------------------------------------------------------------------
 
@@ -1476,7 +1478,7 @@ rmDecl:: (SYB.Data t)
     -> RefactGhc
         (t,
         GHC.LHsDecl GHC.RdrName,
-        Maybe (GHC.LSig GHC.RdrName))  -- ^ The result and the removed declaration
+        Maybe (GHC.LHsDecl GHC.RdrName))  -- ^ The result and the removed declaration
                                        -- and the possibly removed siganture
 
 rmDecl pn incSig t = do
@@ -1625,10 +1627,10 @@ doRmDecl decls1 decls2
 -- ---------------------------------------------------------------------
 
 -- | Remove multiple type signatures
-rmTypeSigs :: (SYB.Data t) =>
+rmTypeSigs :: (HasDecls t, SYB.Data t) =>
          [GHC.Name]  -- ^ The identifiers whose type signatures are to be removed.
       -> t           -- ^ The declarations
-      -> RefactGhc (t,[GHC.LSig GHC.RdrName])
+      -> RefactGhc (t,[GHC.LHsDecl GHC.RdrName])
                      -- ^ The result and removed signatures, if there
                      -- were any
 rmTypeSigs pns t = do
@@ -1642,17 +1644,16 @@ rmTypeSigs pns t = do
 rmTypeSig :: (SYB.Data t) =>
          GHC.Name    -- ^ The identifier whose type signature is to be removed.
       -> t           -- ^ The declarations
-      -> RefactGhc (t,Maybe (GHC.LSig GHC.RdrName))
+      -> RefactGhc (t,Maybe (GHC.LHsDecl GHC.RdrName))
                      -- ^ The result and removed signature, if there
                      -- was one
-                     -- NOTE: It may have originated from a SigD, it is up to the calling function to insert this if required
 rmTypeSig pn t
   = do
      setStateStorage StorageNone
      t' <- SYB.everywhereMStaged SYB.Renamer (SYB.mkM inMatch `SYB.extM` inPatDecl `SYB.extM` inModule) t
      storage <- getStateStorage
      let sig' = case storage of
-                  StorageSigRdr sig -> Just sig
+                  StorageDeclRdr sig -> Just sig
                   StorageNone       -> Nothing
                   x -> error $ "rmTypeSig: unexpected value in StateStorage:" ++ (show x)
      return (t',sig')
@@ -1705,17 +1706,16 @@ rmTypeSig pn t
                       -- Construct the old signature, by keeping the
                       -- signature part but discarding the other names
                       newSpan <- liftT uniqueSrcSpanT
-                      let oldSig = (GHC.L newSpan (GHC.TypeSig [pnt] typ p))
+                      let oldSig = (GHC.L newSpan (GHC.SigD (GHC.TypeSig [pnt] typ p)))
                       -- ++AZ++ : could just use new SrcSpan and copy top level annotation
                       -- oldSig' <- liftT $ doCloneT oldSig
                       liftT $ modifyAnnsT (copyAnn sig oldSig)
-                      setStateStorage (StorageSigRdr oldSig)
+                      setStateStorage (StorageDeclRdr oldSig)
 
                       parent' <- liftT $ replaceDecls parent (decls1++[newSig]++gtail "doRmTypeSig" decls2)
                       return parent'
                   else do
-                      [oldSig] <- undefined --decl2SigT sig
-                      setStateStorage (StorageSigRdr oldSig)
+                      setStateStorage (StorageDeclRdr sig)
                       {-
                       unless (null $ tail decls2) $ do
                         liftT $ transferEntryDPT sig (head $ tail decls2)
@@ -2369,7 +2369,7 @@ renamePNworker oldPN newName useQual t = do
 -- if so, rename the identifier by creating a new name automatically. If the Bool parameter
 -- is True, the token stream will be modified, otherwise only the AST is modified.
 
-autoRenameLocalVar:: (HasDecls t)
+autoRenameLocalVar:: (SYB.Data t)
                      => GHC.Name    -- ^ The identifier.
                      -> t           -- ^ The syntax phrase.
                      -> RefactGhc t -- ^ The result.
@@ -2377,7 +2377,7 @@ autoRenameLocalVar pn t = do
   logm $ "autoRenameLocalVar: (pn)=" ++ (showGhc (pn))
   -- = everywhereMStaged SYB.Renamer (SYB.mkM renameInMatch)
   nm <- getRefactNameMap
-  decls <- liftT $ hsDecls t
+  let decls = listify (\(_ :: GHC.LHsDecl GHC.RdrName) -> True) t
   if isDeclaredInRdr nm pn decls
          then do t' <- worker t
                  return t'

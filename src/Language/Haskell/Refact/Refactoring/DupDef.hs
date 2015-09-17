@@ -19,7 +19,7 @@ import Language.Haskell.GhcMod.Internal as GM (mpPath)
 import Language.Haskell.Refact.API
 
 import Language.Haskell.GHC.ExactPrint.Types
-import Language.Haskell.GHC.ExactPrint.Transform
+import Language.Haskell.GHC.ExactPrint.Transform hiding (liftT)
 
 -- ---------------------------------------------------------------------
 -- | This refactoring duplicates a definition (function binding or

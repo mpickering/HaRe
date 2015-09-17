@@ -11,7 +11,7 @@ import qualified Language.Haskell.GhcMod as GM (Options(..))
 import Language.Haskell.Refact.API
 
 -- To be moved into HaRe API
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 import Language.Haskell.GHC.ExactPrint.Types
 import Language.Haskell.GHC.ExactPrint.Utils
 import Language.Haskell.Refact.Utils.ExactPrint

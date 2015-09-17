@@ -16,7 +16,7 @@ import Data.Maybe
 
 import Language.Haskell.GHC.ExactPrint.Types
 import Language.Haskell.GHC.ExactPrint.Parsers
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 import Language.Haskell.GHC.ExactPrint.Utils
 
 import Language.Haskell.Refact.Utils.Binds
@@ -2558,11 +2558,11 @@ spec = do
          let Just (GHC.L _ sq) = locToName (14, 1) renamed
          let Just (GHC.L _ af) = locToName (18, 1) renamed
 
-         let [sqSig]  = definingSigsRdrNames  nameMap [sq] parsed
+         let [sqSig] = definingSigsRdrNames  nameMap [sq] parsed
              [sqDecl] = definingDeclsRdrNames nameMap [sq] decls False False
              [afDecl] = definingDeclsRdrNames nameMap [af] decls False False
 
-         let  sqSigDecl = wrapSig sqSig
+         sqSigDecl <- liftT $ wrapSigT sqSig
          liftT (balanceComments tlDecl sqSigDecl)
          liftT (balanceComments sqDecl afDecl)
 

@@ -4,7 +4,7 @@ import           Test.Hspec
 
 import           TestUtils
 
-import Language.Haskell.GHC.ExactPrint
+import Language.Haskell.GHC.ExactPrint hiding (liftT)
 
 import Language.Haskell.Refact.Utils.GhcVersionSpecific
 import Language.Haskell.Refact.Utils.LocUtils
